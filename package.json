@@ -1,12 +1,14 @@
 {
-  "name": "stripe-payment-backend",
+  "name": "stripe-backend",
   "version": "1.0.0",
-  "description": "Backend for Stripe payment processing",
-  "main": "api/create-payment-intent.js",
+  "description": "A simple Stripe backend for accepting payments",
+  "main": "index.js",
   "scripts": {
-    "start": "vercel dev"
+    "start": "node index.js"
   },
   "dependencies": {
-    "stripe": "^8.174.0"
+    "express": "^4.17.1",
+    "stripe": "^8.0.0",
+    "cors": "^2.8.5"
   }
 }
