@@ -1,0 +1,12 @@
+{
+  "name": "stripe-payment-backend",
+  "version": "1.0.0",
+  "description": "Backend for Stripe payment processing",
+  "main": "api/create-payment-intent.js",
+  "scripts": {
+    "start": "vercel dev"
+  },
+  "dependencies": {
+    "stripe": "^8.174.0"
+  }
+}
