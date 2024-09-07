@@ -18,12 +18,16 @@ module.exports = async (req, res) => {
       return res.status(400).json({ error: 'Invalid amount' });
     }
 
-    try {
-      // Create a payment intent with the amount received from frontend
-      const paymentIntent = await stripe.paymentIntents.create({
-        amount: amount, // Amount in cents
-        currency: 'usd',
-      });
+  try {
+    // Create a PaymentIntent with the amount and email metadata
+    const paymentIntent = await stripe.paymentIntents.create({
+      amount: amount,
+      currency: 'usd',
+      metadata: {
+        email: email,
+        cartItems: JSON.stringify(cartItems) // Store cart items as a JSON string
+      }
+    });
 
       res.status(200).json({ clientSecret: paymentIntent.client_secret });
     } catch (error) {
