@@ -25,10 +25,12 @@ app.post('/api/create-payment-intent', async (req, res) => {
     const paymentIntent = await stripe.paymentIntents.create({
       amount: amount * 1, // Stripe works in cents, so multiply by 100
       currency: 'usd',
+      receipt_email: 'customer@example.com',
     });
 
     res.status(200).json({
       clientSecret: paymentIntent.client_secret
+      receiptUrl: paymentIntent.charges.data[0].receipt_url // Assuming one charge per payment intent
     });
   } catch (error) {
     res.status(500).json({ error: error.message });
