@@ -13,7 +13,7 @@ app.use(express.json());
 
 // Create Payment Intent Route
 app.post('/api/create-payment-intent', async (req, res) => {
-  const { amount } = req.body;
+  const { amount, receipt_email } = req.body;
 
   // Check if amount is valid
   if (!amount || amount <= 0) {
@@ -23,14 +23,21 @@ app.post('/api/create-payment-intent', async (req, res) => {
   try {
     // Create a payment intent with Stripe
     const paymentIntent = await stripe.paymentIntents.create({
-      amount: amount * 1, // Stripe works in cents, so multiply by 100
+      amount: amount * 100, // Stripe works in cents, so multiply by 100
       currency: 'usd',
-      receipt_email: 'customer@example.com',
+      receipt_email: receipt_email, // Pass the receipt email from the request body
     });
 
+    // Confirm payment intent
+    const confirmedPaymentIntent = await stripe.paymentIntents.confirm(paymentIntent.id);
+
+    // Retrieve the receipt URL from the charge
+    const chargeId = confirmedPaymentIntent.charges.data[0].id;
+    const charge = await stripe.charges.retrieve(chargeId);
+
     res.status(200).json({
-      clientSecret: paymentIntent.client_secret
-      receiptUrl: paymentIntent.charges.data[0].receipt_url // Assuming one charge per payment intent
+      clientSecret: confirmedPaymentIntent.client_secret,
+      receiptUrl: charge.receipt_url // Retrieve receipt URL from charge
     });
   } catch (error) {
     res.status(500).json({ error: error.message });
