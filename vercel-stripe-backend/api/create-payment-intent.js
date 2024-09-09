@@ -33,7 +33,7 @@ module.exports = async (req, res) => {
     try {
       // Create a PaymentIntent with the amount, email, and metadata
       const paymentIntent = await stripe.paymentIntents.create({
-        amount: amount * 100, // Convert dollars to cents
+        amount: amount * 1, // Convert dollars to cents
         currency: 'usd',
         metadata: {
           email: email,
