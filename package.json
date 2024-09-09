@@ -10,10 +10,10 @@
     "@vercel/node": "^1.0.0"
   },
   "scripts": {
-    "start": "node index.js",         // Start server locally using Node.js
-    "dev": "vercel dev",              // Start the server in dev mode with Vercel
-    "build": "vercel build",          // Build the project with Vercel
-    "vercel:start": "vercel start"    // Deploy using Vercel
+    "start": "node index.js",
+    "dev": "vercel dev",
+    "build": "vercel build",
+    "vercel:start": "vercel start"
   },
   "author": "Your Name",
   "license": "MIT"
