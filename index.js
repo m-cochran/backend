@@ -12,13 +12,7 @@ app.use(cors({
 }));
 
 // Body parsing middleware for non-webhook routes
-app.use((req, res, next) => {
-  if (req.originalUrl === '/api/webhook') {
-    next(); // Skip JSON body parsing for webhook route
-  } else {
-    express.json()(req, res, next); // Parse JSON for other routes
-  }
-});
+app.use(express.json()); // Parse JSON for all routes by default
 
 // Webhook endpoint to receive events from Stripe
 app.post('/api/webhook', express.raw({ type: 'application/json' }), (req, res) => {
@@ -54,7 +48,7 @@ app.post('/api/webhook', express.raw({ type: 'application/json' }), (req, res) =
   res.json({ received: true });
 });
 
-// Example route to create a PaymentIntent (for demonstration purposes)
+// Example route to create a PaymentIntent
 app.post('/api/create-payment-intent', async (req, res) => {
   const { amount, receipt_email } = req.body;
 
@@ -71,16 +65,8 @@ app.post('/api/create-payment-intent', async (req, res) => {
       receipt_email: receipt_email // Pass the receipt email from the request body
     });
 
-    // Confirm payment intent
-    const confirmedPaymentIntent = await stripe.paymentIntents.confirm(paymentIntent.id);
-
-    // Retrieve the receipt URL from the charge
-    const chargeId = confirmedPaymentIntent.charges.data[0].id;
-    const charge = await stripe.charges.retrieve(chargeId);
-
     res.status(200).json({
-      clientSecret: confirmedPaymentIntent.client_secret,
-      receiptUrl: charge.receipt_url // Retrieve receipt URL from charge
+      clientSecret: paymentIntent.client_secret,
     });
   } catch (error) {
     res.status(500).json({ error: error.message });
