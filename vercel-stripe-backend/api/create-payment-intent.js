@@ -13,7 +13,7 @@ module.exports = async (req, res) => {
 
   // Handle POST requests
   if (req.method === 'POST') {
-    const { amount, email, cartItems } = req.body; // Extract the amount, email, and cart items from the request body
+    const { amount, email, cartItems, return_url } = req.body; // Extract the amount, email, cart items, and return URL
 
     // Validate the amount
     if (!amount || amount <= 0) {
@@ -41,8 +41,17 @@ module.exports = async (req, res) => {
         },
       });
 
-      // Respond with the client secret needed for Stripe.js
-      res.status(200).json({ clientSecret: paymentIntent.client_secret });
+      // If a return_url is provided, include it in the response
+      const response = {
+        clientSecret: paymentIntent.client_secret,
+      };
+
+      if (return_url) {
+        response.returnUrl = return_url; // Attach the return_url if it exists
+      }
+
+      // Respond with the client secret and optionally the return URL
+      res.status(200).json(response);
     } catch (error) {
       // Handle any errors that occur during PaymentIntent creation
       res.status(500).json({ error: error.message });
