@@ -7,7 +7,9 @@ const app = express();
 // Middleware
 app.use(express.json());
 app.use(cors({
-  origin: 'https://m-cochran.github.io', // Replace with your frontend URL
+  origin: 'https://m-cochran.github.io', // Update this to your actual frontend URL
+  methods: 'GET,POST,OPTIONS',
+  allowedHeaders: 'Content-Type',
 }));
 
 // Default root route
