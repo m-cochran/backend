@@ -26,18 +26,13 @@ app.post('/api/create-payment-intent', async (req, res) => {
       amount: amount * 100, // Stripe works in cents, so multiply by 100
       currency: 'usd',
       receipt_email: receipt_email, // Pass the receipt email from the request body
+      automatic_payment_methods: {
+        enabled: true, // Enable automatic payment methods for different cards
+      }
     });
 
-    // Confirm payment intent
-    const confirmedPaymentIntent = await stripe.paymentIntents.confirm(paymentIntent.id);
-
-    // Retrieve the receipt URL from the charge
-    const chargeId = confirmedPaymentIntent.charges.data[0].id;
-    const charge = await stripe.charges.retrieve(chargeId);
-
     res.status(200).json({
-      clientSecret: confirmedPaymentIntent.client_secret,
-      receiptUrl: charge.receipt_url // Retrieve receipt URL from charge
+      clientSecret: paymentIntent.client_secret
     });
   } catch (error) {
     res.status(500).json({ error: error.message });
