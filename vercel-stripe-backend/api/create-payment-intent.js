@@ -39,10 +39,6 @@ module.exports = async (req, res) => {
           email: email,
           cartItems: JSON.stringify(cartItems), // Store cart items as a JSON string
         },
-        automatic_payment_methods: {
-          enabled: true, // Enable automatic payment methods
-          allow_redirects: 'never', // Disable redirect-based payments
-        },
       });
 
       // Respond with the client secret
