@@ -2,7 +2,7 @@ const express = require('express');
 const cors = require('cors');
 const stripe = require('stripe')('sk_test_51PulULDDaepf7cji2kqbdFVOzF37bS8RrtgO8dpVBpT1m8AXZhcyIBAAf42VOcpE8auFxbm1xSjglmBhvaIYaRck00QkUGMkpF'); // Your Stripe secret key
 const app = express();
-const endpointSecret = 'whsec_xxxxxxx'; // Your webhook secret from Stripe
+const endpointSecret = 'whsec_eHnMf6JWb1VK4Bmn9yO77d8nazu5yKvs'; // Your webhook secret from Stripe
 
 // Middleware for handling CORS and JSON (for non-webhook routes)
 app.use(cors({
