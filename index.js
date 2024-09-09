@@ -10,6 +10,11 @@ app.use(cors({
   origin: 'https://m-cochran.github.io', // Replace with your frontend URL
 }));
 
+// Default root route
+app.get('/', (req, res) => {
+  res.send('Welcome to the Stripe Payment Backend!');
+});
+
 // Create payment intent route
 app.post('/api/create-payment-intent', async (req, res) => {
   const { amount, email, cartItems } = req.body;
