@@ -13,7 +13,7 @@ module.exports = async (req, res) => {
 
   // Handle POST requests
   if (req.method === 'POST') {
-    const { amount, email, cartItems } = req.body; // Extract the amount, email, and cart items
+    const { amount, email, cartItems } = req.body;
 
     // Validate the amount
     if (!amount || amount <= 0) {
@@ -31,7 +31,7 @@ module.exports = async (req, res) => {
     }
 
     try {
-      // Create a PaymentIntent with the amount, email, metadata, and no redirects
+      // Create a PaymentIntent with the amount, email, metadata
       const paymentIntent = await stripe.paymentIntents.create({
         amount: amount * 100, // Convert dollars to cents
         currency: 'usd',
@@ -46,11 +46,9 @@ module.exports = async (req, res) => {
         clientSecret: paymentIntent.client_secret,
       });
     } catch (error) {
-      // Handle any errors that occur during PaymentIntent creation
       res.status(500).json({ error: error.message });
     }
   } else {
-    // Handle any method that is not POST or OPTIONS
     res.setHeader('Allow', 'POST');
     res.status(405).end('Method Not Allowed');
   }
