@@ -2,8 +2,9 @@ const express = require('express');
 const cors = require('cors');
 const stripe = require('stripe')('sk_test_51PulULDDaepf7cji2kqbdFVOzF37bS8RrtgO8dpVBpT1m8AXZhcyIBAAf42VOcpE8auFxbm1xSjglmBhvaIYaRck00QkUGMkpF'); // Your Stripe secret key
 const app = express();
+const endpointSecret = 'whsec_xxxxxxx'; // Your webhook secret from Stripe
 
-// Middleware
+// Middleware for handling CORS and JSON
 app.use(cors({
   origin: 'https://m-cochran.github.io', // Allow requests from your GitHub Pages site
   methods: ['POST'],
@@ -11,34 +12,38 @@ app.use(cors({
 }));
 app.use(express.json());
 
-// Create Payment Intent Route
-app.post('/api/create-payment-intent', async (req, res) => {
-  const { amount, receipt_email } = req.body;
+// Webhook endpoint to receive events from Stripe
+app.post('/api/webhook', express.raw({ type: 'application/json' }), (req, res) => {
+  const sig = req.headers['stripe-signature'];
 
-  // Validate the amount
-  if (!amount || amount <= 0) {
-    return res.status(400).json({ error: 'Invalid amount' });
-  }
+  let event;
 
   try {
-    // Create the payment intent
-    const paymentIntent = await stripe.paymentIntents.create({
-      amount: amount * 100, // Convert to cents
-      currency: 'usd',
-      receipt_email: receipt_email, // Receipt email to send the receipt after successful payment
-      automatic_payment_methods: {
-        enabled: true, // Enable automatic payment methods (supports different payment methods)
-      },
-    });
-
-    // Respond with the client secret (for frontend to complete payment)
-    res.status(200).json({
-      clientSecret: paymentIntent.client_secret,
-    });
-
-  } catch (error) {
-    res.status(500).json({ error: error.message });
+    // Verify the webhook signature to ensure the request came from Stripe
+    event = stripe.webhooks.constructEvent(req.body, sig, endpointSecret);
+  } catch (err) {
+    console.log(`Webhook signature verification failed: ${err.message}`);
+    return res.status(400).send(`Webhook Error: ${err.message}`);
   }
+
+  // Handle the event based on its type
+  switch (event.type) {
+    case 'payment_intent.succeeded':
+      const paymentIntent = event.data.object;
+      const charge = paymentIntent.charges.data[0];
+      const receiptUrl = charge.receipt_url;
+
+      console.log(`Payment successful! Receipt URL: ${receiptUrl}`);
+      // You can now do something with the receipt URL, like send it via email or display it on the thank you page.
+      break;
+
+    // Handle other event types as needed
+    default:
+      console.log(`Unhandled event type: ${event.type}`);
+  }
+
+  // Return a response to acknowledge receipt of the event
+  res.json({ received: true });
 });
 
 // Start the server
