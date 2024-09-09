@@ -31,7 +31,7 @@ module.exports = async (req, res) => {
     }
 
     try {
-      // Create a PaymentIntent with the amount, email, metadata, and disable redirects
+      // Create a PaymentIntent with the amount, email, metadata, and no redirects
       const paymentIntent = await stripe.paymentIntents.create({
         amount: amount * 100, // Convert dollars to cents
         currency: 'usd',
