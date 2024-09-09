@@ -13,7 +13,7 @@ module.exports = async (req, res) => {
 
   // Handle POST requests
   if (req.method === 'POST') {
-    const { amount, email, cartItems, return_url } = req.body; // Extract the amount, email, cart items, and return URL
+    const { amount, email, cartItems } = req.body; // Extract the amount, email, and cart items
 
     // Validate the amount
     if (!amount || amount <= 0) {
@@ -31,22 +31,23 @@ module.exports = async (req, res) => {
     }
 
     try {
-      // Create a PaymentIntent with the amount, email, and metadata
+      // Create a PaymentIntent with the amount, email, metadata, and disable redirects
       const paymentIntent = await stripe.paymentIntents.create({
-        amount: amount * 1, // Convert dollars to cents
+        amount: amount * 100, // Convert dollars to cents
         currency: 'usd',
         metadata: {
           email: email,
           cartItems: JSON.stringify(cartItems), // Store cart items as a JSON string
         },
-        confirm: true, // Automatically confirm the payment
-        return_url: return_url || 'https://m-cochran.github.io/Randomerr/thank-you/', // Use the provided return_url or a default one
+        automatic_payment_methods: {
+          enabled: true, // Enable automatic payment methods
+          allow_redirects: 'never', // Disable redirect-based payments
+        },
       });
 
-      // Respond with the client secret and the receipt URL (if applicable)
+      // Respond with the client secret
       res.status(200).json({
         clientSecret: paymentIntent.client_secret,
-        receiptUrl: paymentIntent.charges.data[0]?.receipt_url,
       });
     } catch (error) {
       // Handle any errors that occur during PaymentIntent creation
