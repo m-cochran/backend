@@ -3,59 +3,55 @@ const express = require('express');
 const cors = require('cors');
 const app = express();
 
-// Use body-parser to parse incoming JSON
 app.use(express.json());
 
-// Use CORS middleware to allow cross-origin requests from your frontend
-app.use(cors({
-  origin: 'https://m-cochran.github.io', // Replace this with your frontend URL
-  methods: 'POST, OPTIONS',
-  allowedHeaders: 'Content-Type'
-}));
+// Allow CORS from specific origins
+app.use(
+  cors({
+    origin: 'https://m-cochran.github.io', // Replace with your frontend origin
+    methods: ['POST', 'OPTIONS'],
+    allowedHeaders: ['Content-Type'],
+  })
+);
 
-// Endpoint to handle the creation of a PaymentIntent
+app.options('*', cors()); // Enable preflight for all routes
+
 app.post('/api/create-payment-intent', async (req, res) => {
   const { amount, email, cartItems } = req.body;
 
-  // Validate request fields
+  // Validate the amount
   if (!amount || amount <= 0) {
     return res.status(400).json({ error: 'Invalid amount' });
   }
-  
+
+  // Validate email
   if (!email) {
     return res.status(400).json({ error: 'Email is required' });
   }
 
+  // Validate cart items
   if (!cartItems || cartItems.length === 0) {
     return res.status(400).json({ error: 'Cart items are required' });
   }
 
   try {
-    // Create a PaymentIntent with Stripe
+    // Create a PaymentIntent with the provided amount and metadata
     const paymentIntent = await stripe.paymentIntents.create({
-      amount: amount * 100, // Stripe expects the amount in cents
+      amount: amount * 100, // Convert dollars to cents
       currency: 'usd',
-      receipt_email: email, // optional, allows Stripe to send a receipt
       metadata: {
         email: email,
-        cartItems: JSON.stringify(cartItems), // Store cart items as a string in metadata
-      }
+        cartItems: JSON.stringify(cartItems), // Store cart items as a JSON string
+      },
     });
 
-    // Send the client secret to the frontend
+    // Send back the client secret to confirm the payment on the client-side
     res.status(200).json({
       clientSecret: paymentIntent.client_secret,
     });
   } catch (error) {
-    console.error('Error creating payment intent:', error);
     res.status(500).json({ error: error.message });
   }
 });
 
-// Handle the preflight request (OPTIONS method) for CORS
-app.options('/api/create-payment-intent', (req, res) => {
-  res.status(200).send();
-});
-
-// Export the Express app
 module.exports = app;
