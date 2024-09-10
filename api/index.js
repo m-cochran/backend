@@ -7,7 +7,7 @@ const endpointSecret = process.env.WEBHOOK_SECRET; // Use environment variable
 // Middleware for handling CORS and JSON (for non-webhook routes)
 app.use(cors({
   origin: 'https://m-cochran.github.io', // Allow requests from your GitHub Pages site
-  methods: ['POST', 'OPTIONS'],
+  methods: ['POST'],
   allowedHeaders: ['Content-Type']
 }));
 
@@ -73,13 +73,8 @@ app.post('/api/create-payment-intent', async (req, res) => {
   }
 });
 
-// Start the server (useful for local development)
-// In Vercel, the server is not directly started; instead, Vercel handles this.
-if (process.env.NODE_ENV === 'development') {
-  const port = process.env.PORT || 3000;
-  app.listen(port, () => {
-    console.log(`Server is running on port ${port}`);
-  });
-}
-
-module.exports = app;
+// Start the server
+const port = process.env.PORT || 3000;
+app.listen(port, () => {
+  console.log(`Server is running on port ${port}`);
+});
