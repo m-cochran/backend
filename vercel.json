@@ -2,7 +2,10 @@
   "version": 2,
   "functions": {
     "api/**.js": {
-      "runtime": "nodejs18.x"  // Use the correct Node.js version
+      "runtime": "nodejs18.x"  // Use a supported Node.js version
     }
-  }
+  },
+  "builds": [
+    { "src": "api/**/*.js", "use": "@vercel/node" }
+  ]
 }
