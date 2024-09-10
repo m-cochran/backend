@@ -4,3 +4,9 @@
     "start": "next start"
   }
 }
+{
+  "dependencies": {
+    "express": "^4.17.1",  // Include Express or other dependencies your project needs
+    "cors": "^2.8.5"
+  }
+}
