@@ -6,10 +6,10 @@ module.exports = async (req, res) => {
     return res.status(405).send({ message: 'Method Not Allowed' });
   }
 
-  const { amount, email, phone, name, address } = req.body;
+  const { amount, email, phone, name, address, shippingAddress } = req.body;
 
   // Validate input
-  if (!amount || !email || !name || !address) {
+  if (!amount || !email || !name || !address || !shippingAddress) {
     return res.status(400).send({ error: 'Missing required fields' });
   }
 
@@ -19,6 +19,16 @@ module.exports = async (req, res) => {
       amount: amount, // In smallest currency unit, e.g., 2000 for $20.00
       currency: 'usd',
       receipt_email: email,
+      shipping: {
+        name: name,
+        address: {
+          line1: shippingAddress.line1,
+          city: shippingAddress.city,
+          state: shippingAddress.state,
+          postal_code: shippingAddress.postal_code,
+          country: shippingAddress.country
+        }
+      },
       payment_method_data: {
         billing_details: {
           name: name,
