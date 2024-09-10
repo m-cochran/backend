@@ -1,12 +1,23 @@
 {
   "version": 3,
-  "build": {
-    "env": {
-      "STRIPE_SECRET_KEY": "@stripe_secret_key",
-      "WEBHOOK_SECRET": "@stripe_webhook_secret"
+  "builds": [
+    {
+      "src": "api/**/*.js",
+      "use": "@vercel/node"
+    },
+    {
+      "src": "public/**/*",
+      "use": "@vercel/static"
     }
-  },
+  ],
   "routes": [
-    { "src": "/api/create-payment-intent", "dest": "/api/create-payment-intent.js" }
+    {
+      "src": "/api/(.*)",
+      "dest": "/api/$1.js"
+    },
+    {
+      "src": "/(.*)",
+      "dest": "/public/$1"
+    }
   ]
 }
