@@ -1,15 +1,17 @@
 {
-  "name": "stripe-backend",
+  "name": "backend-project",
   "version": "1.0.0",
-  "description": "Backend for Stripe Checkout",
-  "main": "api/create-payment-intent.js",
+  "description": "A simple backend for handling API requests.",
+  "main": "index.js",
   "scripts": {
-    "start": "node api/create-payment-intent.js"
+    "start": "node index.js",
+    "dev": "nodemon index.js"
   },
   "dependencies": {
-    "stripe": "^10.0.0"
+    "express": "^4.17.1",
+    "cors": "^2.8.5"
   },
-  "engines": {
-    "node": "18.x"
+  "devDependencies": {
+    "nodemon": "^2.0.7"
   }
 }
