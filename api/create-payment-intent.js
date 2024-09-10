@@ -1,28 +1,35 @@
-const express = require('express');
-const stripe = require('stripe')('sk_test_51PulULDDaepf7cji2kqbdFVOzF37bS8RrtgO8dpVBpT1m8AXZhcyIBAAf42VOcpE8auFxbm1xSjglmBhvaIYaRck00QkUGMkpF'); // Replace with your Stripe secret key
-const app = express();
-const port = process.env.PORT || 3000;
+// /api/create-payment-intent.js
 
-app.use(express.json());
+const Stripe = require('stripe');
+const stripe = Stripe(process.env.STRIPE_SECRET_KEY);
 
-app.post('/api/create-payment-intent', async (req, res) => {
+/**
+ * Vercel Serverless Function Handler
+ * @param {import('@vercel/node').VercelRequest} req
+ * @param {import('@vercel/node').VercelResponse} res
+ */
+module.exports = async (req, res) => {
+  if (req.method !== 'POST') {
+    res.setHeader('Allow', 'POST');
+    return res.status(405).json({ error: 'Method Not Allowed' });
+  }
+
+  const { amount, email } = req.body;
+
+  if (!amount || amount <= 0) {
+    return res.status(400).json({ error: 'Invalid amount' });
+  }
+
   try {
-    const { amount, email } = req.body;
-
     const paymentIntent = await stripe.paymentIntents.create({
-      amount: amount,
-      currency: 'usd', // Adjust currency as needed
+      amount: Math.round(amount * 100), // Convert to cents
+      currency: 'usd',
       receipt_email: email,
-      payment_method_types: ['card'],
     });
 
-    res.json({ clientSecret: paymentIntent.client_secret });
+    return res.status(200).json({ clientSecret: paymentIntent.client_secret });
   } catch (error) {
     console.error('Error creating payment intent:', error);
-    res.status(500).json({ error: 'Internal Server Error' });
+    return res.status(500).json({ error: error.message });
   }
-});
-
-app.listen(port, () => {
-  console.log(`Server running on port ${port}`);
-});
+};
