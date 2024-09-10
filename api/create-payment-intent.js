@@ -14,7 +14,7 @@ module.exports = async (req, res) => {
   }
 
   try {
-    // Create a payment intent with the given amount and additional details
+    // Create a payment intent
     const paymentIntent = await stripe.paymentIntents.create({
       amount: amount, // In smallest currency unit, e.g., 2000 for $20.00
       currency: 'usd',
@@ -36,11 +36,14 @@ module.exports = async (req, res) => {
       confirm: true // Automatically confirm the payment
     });
 
+    // Retrieve the charge to get the receipt URL
+    const charge = await stripe.charges.retrieve(paymentIntent.charges.data[0].id);
+
     // Check if the payment was successful
     if (paymentIntent.status === 'succeeded') {
       res.status(200).send({
         clientSecret: paymentIntent.client_secret,
-        receiptUrl: paymentIntent.charges.data[0].receipt_url
+        receiptUrl: charge.receipt_url
       });
     } else {
       res.status(200).send({
