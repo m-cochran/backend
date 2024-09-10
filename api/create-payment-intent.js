@@ -7,11 +7,11 @@ module.exports = async (req, res) => {
   }
 
   try {
-    const { amount, email, phone, name, address } = req.body;
+    const { amount, email, phone, name, billingAddress, shippingAddress } = req.body;
 
-    // Create a payment intent with the given amount
+    // Create payment intent
     const paymentIntent = await stripe.paymentIntents.create({
-      amount: amount, // In smallest currency unit, e.g., 2000 for $20.00
+      amount: amount, // Amount in smallest currency unit (cents)
       currency: 'usd',
       receipt_email: email,
       payment_method_data: {
@@ -20,12 +20,22 @@ module.exports = async (req, res) => {
           email: email,
           phone: phone,
           address: {
-            line1: address.line1,
-            city: address.city,
-            state: address.state,
-            postal_code: address.postal_code,
-            country: address.country
+            line1: billingAddress.line1,
+            city: billingAddress.city,
+            state: billingAddress.state,
+            postal_code: billingAddress.postal_code,
+            country: billingAddress.country
           }
+        }
+      },
+      shipping: {
+        name: name,
+        address: {
+          line1: shippingAddress.line1,
+          city: shippingAddress.city,
+          state: shippingAddress.state,
+          postal_code: shippingAddress.postal_code,
+          country: shippingAddress.country
         }
       }
     });
