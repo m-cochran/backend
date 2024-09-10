@@ -32,12 +32,21 @@ module.exports = async (req, res) => {
             country: address.country
           }
         }
-      }
+      },
+      confirm: true // Automatically confirm the payment
     });
 
-    res.status(200).send({
-      clientSecret: paymentIntent.client_secret,
-    });
+    // Check if the payment was successful
+    if (paymentIntent.status === 'succeeded') {
+      res.status(200).send({
+        clientSecret: paymentIntent.client_secret,
+        receiptUrl: paymentIntent.charges.data[0].receipt_url
+      });
+    } else {
+      res.status(200).send({
+        clientSecret: paymentIntent.client_secret
+      });
+    }
   } catch (error) {
     console.error('Error creating payment intent:', error);
     res.status(500).send({
