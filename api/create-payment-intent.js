@@ -1,5 +1,5 @@
 const express = require('express');
-const stripe = require('stripe')('your-stripe-secret-key'); // Replace with your Stripe secret key
+const stripe = require('stripe')('sk_test_51PulULDDaepf7cji2kqbdFVOzF37bS8RrtgO8dpVBpT1m8AXZhcyIBAAf42VOcpE8auFxbm1xSjglmBhvaIYaRck00QkUGMkpF'); // Replace with your Stripe secret key
 const app = express();
 const port = process.env.PORT || 3000;
 
