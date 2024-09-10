@@ -1,30 +1,46 @@
+const stripe = require('stripe')(process.env.STRIPE_SECRET_KEY);
 const express = require('express');
 const cors = require('cors');
-const stripe = require('stripe')(process.env.STRIPE_SECRET_KEY);
 const app = express();
 
-// Allow cross-origin requests from your frontend
-app.use(cors({
-  origin: 'https://m-cochran.github.io', // Your frontend URL
-  methods: ['GET', 'POST'], // Allow GET and POST requests
-  allowedHeaders: ['Content-Type'], // Allow Content-Type header
-}));
+// Allow CORS from specific origins
+app.use(
+  cors({
+    origin: 'https://m-cochran.github.io', // Replace with your frontend origin
+    methods: ['POST', 'OPTIONS'],
+    allowedHeaders: ['Content-Type'],
+  })
+);
 
-// Middleware to parse incoming requests
 app.use(express.json());
 
-// Handle the payment intent creation route
+// Define a simple route for the root
+app.get('/', (req, res) => {
+  res.send('Welcome to the Stripe Backend!');
+});
+
+// Enable preflight for all routes
+app.options('*', cors());
+
+// Payment intent route
 app.post('/api/create-payment-intent', async (req, res) => {
   const { amount, email, cartItems } = req.body;
 
-  if (!amount || !email || !cartItems || cartItems.length === 0) {
-    return res.status(400).json({ error: 'Invalid request data' });
+  if (!amount || amount <= 0) {
+    return res.status(400).json({ error: 'Invalid amount' });
+  }
+
+  if (!email) {
+    return res.status(400).json({ error: 'Email is required' });
+  }
+
+  if (!cartItems || cartItems.length === 0) {
+    return res.status(400).json({ error: 'Cart items are required' });
   }
 
   try {
-    // Create a PaymentIntent with the specified amount and metadata
     const paymentIntent = await stripe.paymentIntents.create({
-      amount: amount * 100, // Convert amount to cents
+      amount: amount * 100, // Convert dollars to cents
       currency: 'usd',
       metadata: {
         email: email,
@@ -32,7 +48,6 @@ app.post('/api/create-payment-intent', async (req, res) => {
       },
     });
 
-    // Send back the client secret to the frontend
     res.status(200).json({
       clientSecret: paymentIntent.client_secret,
     });
@@ -41,5 +56,4 @@ app.post('/api/create-payment-intent', async (req, res) => {
   }
 });
 
-// Start the server on the port assigned by Vercel
 module.exports = app;
