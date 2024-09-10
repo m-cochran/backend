@@ -2,14 +2,14 @@
   "version": 2,
   "builds": [
     {
-      "src": "api/**/*.js",
-      "use": "@vercel/node"
+      "src": "api/**/*.js",  // Make sure your source matches your folder structure
+      "use": "@vercel/node"   // Use the Node.js runtime for the API folder
     }
   ],
   "routes": [
     {
-      "src": "/api/(.*)",
-      "dest": "/api/$1.js"
+      "src": "/api/(.*)",  // Capture all API requests
+      "dest": "/api/$1.js" // Route to the corresponding file in the api folder
     }
   ]
 }
