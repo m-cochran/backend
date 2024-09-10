@@ -6,10 +6,15 @@ module.exports = async (req, res) => {
     return res.status(405).send({ message: 'Method Not Allowed' });
   }
 
-  try {
-    const { amount, email, phone, name, address } = req.body;
+  const { amount, email, phone, name, address } = req.body;
 
-    // Create a payment intent with the given amount
+  // Validate input
+  if (!amount || !email || !name || !address) {
+    return res.status(400).send({ error: 'Missing required fields' });
+  }
+
+  try {
+    // Create a payment intent with the given amount and additional details
     const paymentIntent = await stripe.paymentIntents.create({
       amount: amount, // In smallest currency unit, e.g., 2000 for $20.00
       currency: 'usd',
@@ -34,8 +39,9 @@ module.exports = async (req, res) => {
       clientSecret: paymentIntent.client_secret,
     });
   } catch (error) {
+    console.error('Error creating payment intent:', error);
     res.status(500).send({
-      error: error.message,
+      error: 'Internal Server Error',
     });
   }
 };
