@@ -1,57 +1,43 @@
-// api/create-payment-intent.js
 const stripe = require('stripe')(process.env.STRIPE_SECRET_KEY);
 
-module.exports = async (req, res) => {
-  if (req.method !== 'POST') {
-    return res.status(405).send({ message: 'Method Not Allowed' });
-  }
+export default async function handler(req, res) {
+  if (req.method === 'POST') {
+    try {
+      const { amount, email, name, phone, address, shippingAddress, cartItems } = req.body;
 
-  const { amount, email, phone, name, address, shippingAddress } = req.body;
+      // Calculate total amount from cart items
+      const totalAmount = cartItems.reduce((sum, item) => sum + item.price * item.quantity, 0);
 
-  // Validate input
-  if (!amount || !email || !name || !address || !shippingAddress) {
-    return res.status(400).send({ error: 'Missing required fields' });
-  }
-
-  try {
-    // Create a payment intent with the given amount and additional details
-    const paymentIntent = await stripe.paymentIntents.create({
-      amount: amount, // In smallest currency unit, e.g., 2000 for $20.00
-      currency: 'usd',
-      receipt_email: email,
-      shipping: {
-        name: name,
-        address: {
-          line1: shippingAddress.line1,
-          city: shippingAddress.city,
-          state: shippingAddress.state,
-          postal_code: shippingAddress.postal_code,
-          country: shippingAddress.country
-        }
-      },
-      payment_method_data: {
-        billing_details: {
+      // Create a PaymentIntent with shipping details and metadata
+      const paymentIntent = await stripe.paymentIntents.create({
+        amount: totalAmount,
+        currency: 'usd',
+        payment_method_types: ['card'],
+        receipt_email: email,
+        description: 'Order from Randomerr',
+        shipping: {
           name: name,
-          email: email,
           phone: phone,
           address: {
-            line1: address.line1,
-            city: address.city,
-            state: address.state,
-            postal_code: address.postal_code,
-            country: address.country
-          }
-        }
-      }
-    });
+            line1: shippingAddress.line1,
+            city: shippingAddress.city,
+            state: shippingAddress.state,
+            postal_code: shippingAddress.postal_code,
+            country: shippingAddress.country,
+          },
+        },
+        metadata: { 
+          cartItems: JSON.stringify(cartItems), // Store cart details as metadata
+          integration_check: 'accept_a_payment' 
+        },
+      });
 
-    res.status(200).send({
-      clientSecret: paymentIntent.client_secret,
-    });
-  } catch (error) {
-    console.error('Error creating payment intent:', error);
-    res.status(500).send({
-      error: 'Internal Server Error',
-    });
+      // Respond with the client secret to confirm the payment
+      res.status(200).json({ clientSecret: paymentIntent.client_secret });
+    } catch (error) {
+      res.status(500).json({ error: error.message });
+    }
+  } else {
+    res.status(405).json({ error: 'Method not allowed' });
   }
-};
+}
