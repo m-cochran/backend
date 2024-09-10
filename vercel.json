@@ -1,8 +1,7 @@
 {
-  "version": 2,
   "functions": {
-    "api/*.js": {
-      "runtime": "nodejs16"
+    "api/**.js": {
+      "runtime": "nodejs18.x"  // Use the appropriate Node.js runtime version
     }
   }
 }
