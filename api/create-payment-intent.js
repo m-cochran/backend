@@ -14,22 +14,29 @@ module.exports = async (req, res) => {
   }
 
   try {
-    // Create a payment intent
+    // Create a payment intent with the given amount and additional details
     const paymentIntent = await stripe.paymentIntents.create({
       amount: amount, // In smallest currency unit, e.g., 2000 for $20.00
       currency: 'usd',
-      payment_method_types: ['card'],
       receipt_email: email,
-      confirm: true // Automatically confirm the payment
+      payment_method_data: {
+        billing_details: {
+          name: name,
+          email: email,
+          phone: phone,
+          address: {
+            line1: address.line1,
+            city: address.city,
+            state: address.state,
+            postal_code: address.postal_code,
+            country: address.country
+          }
+        }
+      }
     });
 
-    // Retrieve the charge to get the receipt URL
-    const charge = await stripe.charges.retrieve(paymentIntent.charges.data[0].id);
-
-    // Send back the client secret and receipt URL
     res.status(200).send({
       clientSecret: paymentIntent.client_secret,
-      receiptUrl: charge.receipt_url // This should be available
     });
   } catch (error) {
     console.error('Error creating payment intent:', error);
