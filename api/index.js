@@ -8,7 +8,7 @@ const endpointSecret = process.env.WEBHOOK_SECRET; // Use environment variable
 app.use(cors({
   origin: 'https://m-cochran.github.io', // Allow requests from your GitHub Pages site
   methods: ['POST'],
-  allowedHeaders: ['Content-Type']
+  allowedHeaders: ['Content-Type'],
 }));
 
 // Body parsing middleware for non-webhook routes
@@ -36,7 +36,6 @@ app.post('/api/webhook', express.raw({ type: 'application/json' }), (req, res) =
       const receiptUrl = charge.receipt_url;
 
       console.log(`Payment successful! Receipt URL: ${receiptUrl}`);
-      // You can now do something with the receipt URL, like send it via email or display it on a thank you page.
       break;
 
     // Handle other event types as needed
@@ -44,7 +43,6 @@ app.post('/api/webhook', express.raw({ type: 'application/json' }), (req, res) =
       console.log(`Unhandled event type: ${event.type}`);
   }
 
-  // Return a response to acknowledge receipt of the event
   res.json({ received: true });
 });
 
@@ -62,7 +60,7 @@ app.post('/api/create-payment-intent', async (req, res) => {
     const paymentIntent = await stripe.paymentIntents.create({
       amount: amount * 100, // Stripe works in cents, so multiply by 100
       currency: 'usd',
-      receipt_email: receipt_email // Pass the receipt email from the request body
+      receipt_email: receipt_email, // Pass the receipt email from the request body
     });
 
     res.status(200).json({
