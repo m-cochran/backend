@@ -3,15 +3,18 @@ const stripe = require('stripe')(process.env.STRIPE_SECRET_KEY);
 export default async function handler(req, res) {
   if (req.method === 'POST') {
     try {
-      const { amount, email, name, phone, address, shippingAddress } = req.body;
+      const { cart, email, name, phone, address, shippingAddress } = req.body;
+
+       // Calculate the total amount in cents
+      const totalAmount = cart.reduce((total, item) => total + item.price * item.quantity, 0);
 
       // Create a PaymentIntent with shipping details
       const paymentIntent = await stripe.paymentIntents.create({
-        amount: amount,
+        amount: totalAmount, // Total amount in cents
         currency: 'usd',
         payment_method_types: ['card'],
         receipt_email: email,
-        description: 'Example charge',
+        description: ''Purchase from My Shop',
         shipping: {
           name: name,
           phone: phone,
