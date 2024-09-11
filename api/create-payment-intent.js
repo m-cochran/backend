@@ -8,17 +8,27 @@ app.use(bodyParser.json());
 app.post('/api/create-payment-intent', async (req, res) => {
   const {
     amount,
-    cartItems, // Received from client-side
+    email,
+    phone,
+    name,
+    address,
+    shippingAddress,
+    cartItems // Receive cartItems from the request
   } = req.body;
 
-  // Format cart items for inclusion in the description
-  const cartItemsString = cartItems.map(item => `${item.name} (${item.quantity} x $${item.price})`).join(", ");
-
   try {
+    // Create a payment intent with metadata
     const paymentIntent = await stripe.paymentIntents.create({
       amount: amount,
       currency: 'usd',
-      description: `Order Details: ${cartItemsString}`, // Add cart items to description
+      metadata: {
+        email: email,
+        phone: phone,
+        name: name,
+        address: JSON.stringify(address),
+        shippingAddress: JSON.stringify(shippingAddress),
+        cartItems: JSON.stringify(cartItems) // Add cartItems to metadata
+      }
     });
 
     res.send({ clientSecret: paymentIntent.client_secret });
