@@ -10,11 +10,16 @@ const formatCartItems = (cartItems) => {
   if (!Array.isArray(cartItems)) {
     throw new Error('cartItems should be an array');
   }
-  return cartItems.map((item) => {
+  
+  return cartItems.map((item, index) => {
+    // Log each item for debugging
+    console.log(`Processing item ${index}:`, item);
+    
     // Ensure each item has the required properties
     if (!item.name || item.quantity === undefined || item.price === undefined) {
-      throw new Error('Each cart item should have name, quantity, and price');
+      throw new Error(`Item at index ${index} is missing required properties`);
     }
+    
     return `${item.name} (${item.quantity} x $${item.price.toFixed(2)})`;
   }).join(', ');
 };
@@ -31,6 +36,9 @@ app.post('/api/create-payment-intent', async (req, res) => {
   } = req.body;
 
   try {
+    // Log request body for debugging
+    console.log('Request body:', req.body);
+
     // Format cart items into a string
     const cartItemsString = formatCartItems(cartItems);
 
@@ -51,6 +59,8 @@ app.post('/api/create-payment-intent', async (req, res) => {
 
     res.send({ clientSecret: paymentIntent.client_secret });
   } catch (error) {
+    // Log error for debugging
+    console.error('Error creating payment intent:', error);
     res.status(500).send({ error: error.message });
   }
 });
