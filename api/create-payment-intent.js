@@ -3,18 +3,15 @@ const stripe = require('stripe')(process.env.STRIPE_SECRET_KEY);
 export default async function handler(req, res) {
   if (req.method === 'POST') {
     try {
-      const { amount, email, name, phone, address, shippingAddress, cartItems } = req.body;
+      const { amount, email, name, phone, address, shippingAddress } = req.body;
 
-      // Calculate total amount from cart items
-      const totalAmount = cartItems.reduce((sum, item) => sum + item.price * item.quantity, 0);
-
-      // Create a PaymentIntent with shipping details and metadata
+      // Create a PaymentIntent with shipping details
       const paymentIntent = await stripe.paymentIntents.create({
-        amount: totalAmount,
+        amount: amount,
         currency: 'usd',
         payment_method_types: ['card'],
         receipt_email: email,
-        description: 'Order from Randomerr',
+        description: 'Example charge',
         shipping: {
           name: name,
           phone: phone,
@@ -26,10 +23,8 @@ export default async function handler(req, res) {
             country: shippingAddress.country,
           },
         },
-        metadata: { 
-          cartItems: JSON.stringify(cartItems), // Store cart details as metadata
-          integration_check: 'accept_a_payment' 
-        },
+        // Optionally, you can add metadata or other fields
+        metadata: { integration_check: 'accept_a_payment' },
       });
 
       // Respond with the client secret to confirm the payment
