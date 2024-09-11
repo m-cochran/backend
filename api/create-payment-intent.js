@@ -5,6 +5,11 @@ const app = express();
 
 app.use(bodyParser.json());
 
+// Helper function to format cart items as a string
+const formatCartItems = (cartItems) => {
+  return cartItems.map(item => `${item.name} (${item.quantity} x $${item.price})`).join(', ');
+};
+
 app.post('/api/create-payment-intent', async (req, res) => {
   const {
     amount,
@@ -15,6 +20,9 @@ app.post('/api/create-payment-intent', async (req, res) => {
     shippingAddress,
     cartItems // Receive cartItems from the request
   } = req.body;
+
+  // Format cart items into a string
+  const cartItemsString = formatCartItems(cartItems);
 
   try {
     // Create a payment intent with metadata
