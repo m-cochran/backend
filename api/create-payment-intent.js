@@ -21,6 +21,7 @@ app.post('/api/create-payment-intent', async (req, res) => {
     const paymentIntent = await stripe.paymentIntents.create({
       amount: amount,
       currency: 'usd',
+      description: `Order Details: ${cartItemsString}`,
       metadata: {
         email: email,
         phone: phone,
