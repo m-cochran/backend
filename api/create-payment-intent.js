@@ -21,6 +21,7 @@ export default async function handler(req, res) {
             state: shippingAddress.state,
             postal_code: shippingAddress.postal_code,
             country: shippingAddress.country,
+            cartItems: JSON.stringify(cartItems) // Save cart items in metadata
           },
         },
         // Optionally, you can add metadata or other fields
