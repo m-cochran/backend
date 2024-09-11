@@ -10,11 +10,12 @@ const formatCartItems = (cartItems) => {
   if (!Array.isArray(cartItems)) {
     throw new Error('cartItems should be an array');
   }
-  return cartItems.map(item => {
-    if (!item.name || !item.quantity || !item.price) {
+  return cartItems.map((item) => {
+    // Ensure each item has the required properties
+    if (!item.name || item.quantity === undefined || item.price === undefined) {
       throw new Error('Each cart item should have name, quantity, and price');
     }
-    return `${item.name} (${item.quantity} x $${item.price})`;
+    return `${item.name} (${item.quantity} x $${item.price.toFixed(2)})`;
   }).join(', ');
 };
 
