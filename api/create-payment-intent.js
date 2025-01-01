@@ -8,16 +8,18 @@ app.use(bodyParser.json());
 
 const JSONBIN_URL = 'https://api.jsonbin.io/v3/b/6775bd76ad19ca34f8e44030';
 const JSONBIN_API_KEY = '$2a$10$0zQ9ptn/GS2udbT18fHUeOAm6D5RG8kSGWJF5Z9GmqKTVAL5RmPyG'; // Get this from your JSONBin account
+const JSONBIN_ACCESS_KEY = '$2a$10$o2oz/yCGlcGq6Ch.h9vYEe1nyBv3WbY7vsc9Gv1wGtayT4SuSxF1C'; // Your access key for reading and writing
 
 // Helper function to get all orders
 const getOrders = async () => {
   const response = await fetch(JSONBIN_URL, {
     headers: {
-      'X-Master-Key': JSONBIN_API_KEY,
+      'X-Master-Key': JSONBIN_API_KEY, // This should be the Master Key for update actions
+      'X-Access-Key': JSONBIN_ACCESS_KEY, // Your access key for reading
     },
   });
   const data = await response.json();
-  return data.record;
+  return data.record || []; // Ensure we return an empty array if no data exists
 };
 
 // Helper function to update orders
@@ -26,9 +28,9 @@ const updateOrders = async (newOrders) => {
     method: 'PUT',
     headers: {
       'Content-Type': 'application/json',
-      'X-Access-Key': $2a$10$0zQ9ptn/GS2udbT18fHUeOAm6D5RG8kSGWJF5Z9GmqKTVAL5RmPyG, // Use X-Access-Key here
+      'X-Master-Key': JSONBIN_API_KEY, // This should be the Master Key for update actions
     },
-    body: JSON.stringify(newOrders),
+    body: JSON.stringify({ record: newOrders }), // Wrap the new orders in a 'record' field to match JSONBin's expected structure
   });
 };
 
