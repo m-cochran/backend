@@ -6,7 +6,7 @@ const app = express();
 
 app.use(bodyParser.json());
 
-const JSONBIN_URL = 'https://api.jsonbin.io/v3/b/6775b454acd3cb34a8c2bec6';
+const JSONBIN_URL = 'https://api.jsonbin.io/v3/b/6775bb03acd3cb34a8c2c096';
 const JSONBIN_API_KEY = '$2a$10$o2oz/yCGlcGq6Ch.h9vYEe1nyBv3WbY7vsc9Gv1wGtayT4SuSxF1C'; // Get this from your JSONBin account
 
 // Helper function to get all orders
