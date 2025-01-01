@@ -1,9 +1,18 @@
 const express = require('express');
 const bodyParser = require('body-parser');
 const stripe = require('stripe')(process.env.STRIPE_SECRET_KEY);
+const fs = require('fs');
 const app = express();
 
 app.use(bodyParser.json());
+
+// File path for storing orders
+const ORDERS_FILE = './orders.json';
+
+// Ensure orders file exists
+if (!fs.existsSync(ORDERS_FILE)) {
+  fs.writeFileSync(ORDERS_FILE, JSON.stringify([]));
+}
 
 app.post('/api/create-payment-intent', async (req, res) => {
   const {
@@ -31,8 +40,29 @@ app.post('/api/create-payment-intent', async (req, res) => {
       }
     });
 
-    // Respond with order information
-    res.json({ success: true, orderId: order.id });
+    // Read existing orders
+    const ordersData = JSON.parse(fs.readFileSync(ORDERS_FILE, 'utf-8'));
+
+    // Create a new order object
+    const newOrder = {
+      id: paymentIntent.id,
+      userId: email, // Use email as a unique identifier for the user
+      amount: paymentIntent.amount,
+      paymentStatus: paymentIntent.status,
+      cartItems: cartItems,
+      shippingAddress: shippingAddress,
+      billingAddress: address,
+      createdAt: new Date().toISOString(),
+    };
+
+    // Add the new order to the orders array
+    ordersData.push(newOrder);
+
+    // Save updated orders back to the file
+    fs.writeFileSync(ORDERS_FILE, JSON.stringify(ordersData, null, 2));
+
+    // Respond with success and order ID
+    res.json({ success: true, orderId: paymentIntent.id });
   } catch (err) {
     res.status(500).json({ error: err.message });
   }
