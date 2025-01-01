@@ -1,77 +1,67 @@
 const express = require('express');
 const bodyParser = require('body-parser');
 const stripe = require('stripe')(process.env.STRIPE_SECRET_KEY);
-const fetch = require('node-fetch'); // Install this package for HTTP requests
+const fs = require('fs');
 const app = express();
 
 app.use(bodyParser.json());
 
-const JSONBIN_URL = 'https://api.jsonbin.io/v3/b/6775bd76ad19ca34f8e44030';
-const JSONBIN_API_KEY = '$2a$10$0zQ9ptn/GS2udbT18fHUeOAm6D5RG8kSGWJF5Z9GmqKTVAL5RmPyG'; // Get this from your JSONBin account
-const JSONBIN_ACCESS_KEY = '$2a$10$o2oz/yCGlcGq6Ch.h9vYEe1nyBv3WbY7vsc9Gv1wGtayT4SuSxF1C'; // Your access key for reading and writing
+// File path for storing orders
+const ORDERS_FILE = './orders.json';
 
-// Helper function to get all orders
-const getOrders = async () => {
-  const response = await fetch(JSONBIN_URL, {
-    headers: {
-      'X-Master-Key': JSONBIN_API_KEY, // This should be the Master Key for update actions
-      'X-Access-Key': JSONBIN_ACCESS_KEY, // Your access key for reading
-    },
-  });
-  const data = await response.json();
-  return data.record || []; // Ensure we return an empty array if no data exists
-};
-
-// Helper function to update orders
-const updateOrders = async (newOrders) => {
-  await fetch(JSONBIN_URL, {
-    method: 'PUT',
-    headers: {
-      'Content-Type': 'application/json',
-      'X-Master-Key': JSONBIN_API_KEY, // This should be the Master Key for update actions
-    },
-    body: JSON.stringify({ record: newOrders }), // Wrap the new orders in a 'record' field to match JSONBin's expected structure
-  });
-};
+// Ensure orders file exists
+if (!fs.existsSync(ORDERS_FILE)) {
+  fs.writeFileSync(ORDERS_FILE, JSON.stringify([]));
+}
 
 app.post('/api/create-payment-intent', async (req, res) => {
-  const { amount, email, phone, name, address, shippingAddress, cartItems } = req.body;
+  const {
+    amount,
+    email,
+    phone,
+    name,
+    address,
+    shippingAddress,
+    cartItems // Receive cartItems from the request
+  } = req.body;
 
   try {
-    // Create a payment intent with Stripe
+    // Create a payment intent with metadata
     const paymentIntent = await stripe.paymentIntents.create({
-      amount,
+      amount: amount,
       currency: 'usd',
       metadata: {
-        email,
-        phone,
-        name,
+        email: email,
+        phone: phone,
+        name: name,
         address: JSON.stringify(address),
         shippingAddress: JSON.stringify(shippingAddress),
-        cartItems: JSON.stringify(cartItems),
-      },
+        cartItems: JSON.stringify(cartItems) // Add cartItems to metadata
+      }
     });
 
-    // Get existing orders
-    const orders = await getOrders();
+    // Read existing orders
+    const ordersData = JSON.parse(fs.readFileSync(ORDERS_FILE, 'utf-8'));
 
-    // Add new order
+    // Create a new order object
     const newOrder = {
       id: paymentIntent.id,
-      userId: email,
+      userId: email, // Use email as a unique identifier for the user
       amount: paymentIntent.amount,
       paymentStatus: paymentIntent.status,
-      cartItems,
-      shippingAddress,
+      cartItems: cartItems,
+      shippingAddress: shippingAddress,
       billingAddress: address,
       createdAt: new Date().toISOString(),
     };
-    orders.push(newOrder);
 
-    // Update orders in JSONBin
-    await updateOrders(orders);
+    // Add the new order to the orders array
+    ordersData.push(newOrder);
 
-    // Respond with success
+    // Save updated orders back to the file
+    fs.writeFileSync(ORDERS_FILE, JSON.stringify(ordersData, null, 2));
+
+    // Respond with success and order ID
     res.json({ success: true, orderId: paymentIntent.id });
   } catch (err) {
     res.status(500).json({ error: err.message });
