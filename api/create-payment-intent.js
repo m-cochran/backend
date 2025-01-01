@@ -1,67 +1,102 @@
 const express = require('express');
 const bodyParser = require('body-parser');
 const stripe = require('stripe')(process.env.STRIPE_SECRET_KEY);
-const fs = require('fs');
+const fetch = require('node-fetch');
+const { Octokit } = require("@octokit/core"); // GitHub API package
 const app = express();
 
 app.use(bodyParser.json());
 
-// File path for storing orders
-const ORDERS_FILE = './orders.json';
+// GitHub API credentials
+const octokit = new Octokit({
+  auth: process.env.GITHUB_TOKEN,  // Use your GitHub token here
+});
 
-// Ensure orders file exists
-if (!fs.existsSync(ORDERS_FILE)) {
-  fs.writeFileSync(ORDERS_FILE, JSON.stringify([]));
-}
+const REPO_OWNER = 'm-cochran'; // Replace with your GitHub username
+const REPO_NAME = 'backend.github.io'; // Replace with your GitHub repository name
+const FILE_PATH = 'orders.json'; // Path to the file in the repository
 
-app.post('/api/create-payment-intent', async (req, res) => {
-  const {
-    amount,
-    email,
-    phone,
-    name,
-    address,
-    shippingAddress,
-    cartItems // Receive cartItems from the request
-  } = req.body;
-
+// Helper function to get orders from GitHub
+const getOrdersFromGitHub = async () => {
   try {
-    // Create a payment intent with metadata
-    const paymentIntent = await stripe.paymentIntents.create({
-      amount: amount,
-      currency: 'usd',
-      metadata: {
-        email: email,
-        phone: phone,
-        name: name,
-        address: JSON.stringify(address),
-        shippingAddress: JSON.stringify(shippingAddress),
-        cartItems: JSON.stringify(cartItems) // Add cartItems to metadata
-      }
+    const response = await octokit.request('GET /repos/{owner}/{repo}/contents/{path}', {
+      owner: REPO_OWNER,
+      repo: REPO_NAME,
+      path: FILE_PATH,
+    });
+    
+    const content = Buffer.from(response.data.content, 'base64').toString();
+    return JSON.parse(content);
+  } catch (err) {
+    console.error('Error fetching data from GitHub:', err);
+    return [];
+  }
+};
+
+// Helper function to update orders in GitHub
+const updateOrdersInGitHub = async (orders) => {
+  try {
+    // Get the current file's SHA for updating
+    const response = await octokit.request('GET /repos/{owner}/{repo}/contents/{path}', {
+      owner: REPO_OWNER,
+      repo: REPO_NAME,
+      path: FILE_PATH,
     });
 
-    // Read existing orders
-    const ordersData = JSON.parse(fs.readFileSync(ORDERS_FILE, 'utf-8'));
+    const sha = response.data.sha;
 
-    // Create a new order object
+    // Update the orders file with new content
+    await octokit.request('PUT /repos/{owner}/{repo}/contents/{path}', {
+      owner: REPO_OWNER,
+      repo: REPO_NAME,
+      path: FILE_PATH,
+      message: 'Update orders.json with new order',
+      content: Buffer.from(JSON.stringify(orders, null, 2)).toString('base64'),
+      sha: sha, // Required for updating an existing file
+    });
+  } catch (err) {
+    console.error('Error updating data on GitHub:', err);
+  }
+};
+
+app.post('/api/create-payment-intent', async (req, res) => {
+  const { amount, email, phone, name, address, shippingAddress, cartItems } = req.body;
+
+  try {
+    // Create a payment intent with Stripe
+    const paymentIntent = await stripe.paymentIntents.create({
+      amount,
+      currency: 'usd',
+      metadata: {
+        email,
+        phone,
+        name,
+        address: JSON.stringify(address),
+        shippingAddress: JSON.stringify(shippingAddress),
+        cartItems: JSON.stringify(cartItems),
+      },
+    });
+
+    // Fetch the existing orders from GitHub
+    const orders = await getOrdersFromGitHub();
+
+    // Add new order
     const newOrder = {
       id: paymentIntent.id,
-      userId: email, // Use email as a unique identifier for the user
+      userId: email,
       amount: paymentIntent.amount,
       paymentStatus: paymentIntent.status,
-      cartItems: cartItems,
-      shippingAddress: shippingAddress,
+      cartItems,
+      shippingAddress,
       billingAddress: address,
       createdAt: new Date().toISOString(),
     };
+    orders.push(newOrder);
 
-    // Add the new order to the orders array
-    ordersData.push(newOrder);
+    // Update the orders file on GitHub
+    await updateOrdersInGitHub(orders);
 
-    // Save updated orders back to the file
-    fs.writeFileSync(ORDERS_FILE, JSON.stringify(ordersData, null, 2));
-
-    // Respond with success and order ID
+    // Respond with success
     res.json({ success: true, orderId: paymentIntent.id });
   } catch (err) {
     res.status(500).json({ error: err.message });
