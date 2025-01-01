@@ -26,7 +26,7 @@ const updateOrders = async (newOrders) => {
     method: 'PUT',
     headers: {
       'Content-Type': 'application/json',
-      'X-Access-Key': JSONBIN_API_KEY, // Use X-Access-Key here
+      'X-Access-Key': $2a$10$0zQ9ptn/GS2udbT18fHUeOAm6D5RG8kSGWJF5Z9GmqKTVAL5RmPyG, // Use X-Access-Key here
     },
     body: JSON.stringify(newOrders),
   });
