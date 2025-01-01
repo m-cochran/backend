@@ -6,8 +6,8 @@ const app = express();
 
 app.use(bodyParser.json());
 
-const JSONBIN_URL = 'https://api.jsonbin.io/v3/b/6775bb03acd3cb34a8c2c096';
-const JSONBIN_API_KEY = '$2a$10$o2oz/yCGlcGq6Ch.h9vYEe1nyBv3WbY7vsc9Gv1wGtayT4SuSxF1C'; // Get this from your JSONBin account
+const JSONBIN_URL = 'https://api.jsonbin.io/v3/b/6775bd76ad19ca34f8e44030';
+const JSONBIN_API_KEY = '$2a$10$0zQ9ptn/GS2udbT18fHUeOAm6D5RG8kSGWJF5Z9GmqKTVAL5RmPyG'; // Get this from your JSONBin account
 
 // Helper function to get all orders
 const getOrders = async () => {
@@ -26,7 +26,7 @@ const updateOrders = async (newOrders) => {
     method: 'PUT',
     headers: {
       'Content-Type': 'application/json',
-      'X-Master-Key': JSONBIN_API_KEY,
+      'X-Access-Key': JSONBIN_API_KEY, // Use X-Access-Key here
     },
     body: JSON.stringify(newOrders),
   });
