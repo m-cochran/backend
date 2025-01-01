@@ -31,6 +31,19 @@ app.post('/api/create-payment-intent', async (req, res) => {
       }
     });
 
+
+      // Save purchase data
+  const purchase = new Purchase({
+    email,
+    cartItems,
+    amount,
+    date: new Date(),
+    paymentIntentId: paymentIntent.id,
+    ...otherData,
+  });
+  await purchase.save();
+    
+
     res.send({ clientSecret: paymentIntent.client_secret });
   } catch (error) {
     res.status(500).send({ error: error.message });
