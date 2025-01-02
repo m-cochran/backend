@@ -62,7 +62,7 @@ app.post('/api/store-purchase', async (req, res) => {
     // Append data to Google Sheet
     const response = await sheets.spreadsheets.values.append({
       spreadsheetId: SPREADSHEET_ID,
-      range: 'Sheet1!A:E', // Replace "Sheet1" with your sheet name and range
+      range: 'PurchaseData!A:E', // Replace "Sheet1" with your sheet name and range
       valueInputOption: 'RAW',
       resource: {
         values: [[orderId, email, JSON.stringify(items), total, date]],
