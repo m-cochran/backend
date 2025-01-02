@@ -7,7 +7,14 @@ const fs = require('fs');
 
 // Initialize Express
 const app = express();
-app.use(cors());
+
+// Enable CORS with specific settings
+app.use(cors({
+  origin: 'https://m-cochran.github.io/Randomerr/', // Replace with the actual frontend URL
+  methods: ['GET', 'POST'],
+  allowedHeaders: ['Content-Type', 'Authorization'],
+}));
+
 app.use(express.json());
 
 // Google Sheets API setup
