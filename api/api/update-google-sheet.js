@@ -13,7 +13,7 @@ module.exports = async (req, res) => {
       const sheets = google.sheets({ version: "v4", auth });
 
       const spreadsheetId = process.env.SHEET_ID; // Your Google Sheet ID
-      const range = "Orders!A1"; // Sheet and range to append data
+      const range = "PurchaseData!A1"; // Sheet and range to append data
       const values = [[
         orderId,
         customerDetails.name,
