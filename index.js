@@ -10,7 +10,7 @@ const app = express();
 
 // Enable CORS with specific settings
 app.use(cors({
-  origin: 'https://m-cochran.github.io/Randomerr/', // Replace with the actual frontend URL
+  origin: 'https://m-cochran.github.io', // Allow requests from your GitHub Pages URL
   methods: ['GET', 'POST'],
   allowedHeaders: ['Content-Type', 'Authorization'],
 }));
