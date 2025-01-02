@@ -21,7 +21,7 @@ app.post('/api/store-purchase', async (req, res) => {
     // Add data to the Google Sheet
     await sheets.spreadsheets.values.append({
       spreadsheetId: SPREADSHEET_ID,
-      range: 'Sheet1!A1', // Change this if your sheet has different range
+      range: 'PurchaseData!A:E', // Change this if your sheet has different range
       valueInputOption: 'RAW',
       requestBody: {
         values: rows,
