@@ -1,15 +1,18 @@
 const express = require('express');
 const bodyParser = require('body-parser');
-const stripe = require('stripe')(process.env.STRIPE_SECRET_KEY);
+const stripe = require('stripe')(process.env.STRIPE_SECRET_KEY); // Stripe Secret Key (ensure it's set as an env variable)
 const fetch = require('node-fetch');
-const { Octokit } = require("@octokit/core"); // GitHub API package
+const { Octokit } = require('@octokit/core'); // GitHub API package
 const app = express();
 
 app.use(bodyParser.json());
 
+// Hardcode the GitHub token for testing
+const githubToken = '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'; // Replace this with your actual GitHub token for testing
+
 // GitHub API credentials
 const octokit = new Octokit({
-  auth: process.env.GITHUB_TOKEN,  // Use your GitHub token here
+  auth: githubToken,  // Using the hardcoded GitHub token for testing
 });
 
 const REPO_OWNER = 'm-cochran'; // Replace with your GitHub username
