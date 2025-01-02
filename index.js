@@ -1,4 +1,3 @@
-// Import dependencies
 const express = require('express');
 const cors = require('cors');
 const stripe = require('stripe')(process.env.STRIPE_SECRET_KEY);
@@ -7,15 +6,18 @@ const bodyParser = require('body-parser');
 const fs = require('fs');
 require('dotenv').config();
 
-// Initialize the app and middleware
 const app = express();
 const PORT = process.env.PORT || 3000;
-app.use(cors());
-app.use(bodyParser.json()); // For parsing JSON bodies
 
-// Google Sheets API setup
+// Middleware
+app.use(cors());
+app.use(bodyParser.json()); // Parse JSON bodies
+
+// Load Google Sheets credentials
 const credentials = JSON.parse(fs.readFileSync('credentials.json', 'utf8'));
 const { client_email, private_key } = credentials;
+
+// Authenticate with Google Sheets API
 const auth = new google.auth.JWT(
   client_email,
   null,
@@ -26,7 +28,7 @@ const auth = new google.auth.JWT(
 const sheets = google.sheets({ version: 'v4', auth });
 const SPREADSHEET_ID = '1wPeCV9lwDu-gJarBLTHAOipb4y83RwT_Een88zHGcpc'; // Your Google Sheets ID
 
-// Route for Stripe payment intent creation
+// Route to create a payment intent (Stripe)
 app.post('/api/create-payment-intent', async (req, res) => {
   try {
     const { amount, email } = req.body;
@@ -57,13 +59,18 @@ app.post('/api/store-purchase', async (req, res) => {
   const { orderId, email, items, total, date } = req.body;
 
   try {
+    // Validate input data
+    if (!orderId || !email || !items || !total || !date) {
+      return res.status(400).json({ error: 'Missing required fields' });
+    }
+
     // Append data to Google Sheet
     const response = await sheets.spreadsheets.values.append({
       spreadsheetId: SPREADSHEET_ID,
-      range: 'Sheet1!A:E', // Replace with your actual range
+      range: 'Sheet1!A:E', // Replace "Sheet1" with your sheet name and range
       valueInputOption: 'RAW',
       resource: {
-        values: [[orderId, email, JSON.stringify(items), total, date]],
+        values: [[orderId, email, JSON.stringify(items), total, date]], // Save items as a JSON string
       },
     });
 
@@ -76,5 +83,5 @@ app.post('/api/store-purchase', async (req, res) => {
 
 // Start the server
 app.listen(PORT, () => {
-  console.log(`Server running on port ${PORT}`);
+  console.log(`Server running on http://localhost:${PORT}`);
 });
