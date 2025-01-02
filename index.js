@@ -11,7 +11,7 @@ const PORT = process.env.PORT || 3000;
 
 // Middleware
 app.use(cors());
-app.use(bodyParser.json()); // Parse JSON bodies
+app.use(bodyParser.json());
 
 // Load Google Sheets credentials
 const credentials = JSON.parse(fs.readFileSync('credentials.json', 'utf8'));
@@ -28,7 +28,7 @@ const auth = new google.auth.JWT(
 const sheets = google.sheets({ version: 'v4', auth });
 const SPREADSHEET_ID = '1wPeCV9lwDu-gJarBLTHAOipb4y83RwT_Een88zHGcpc'; // Your Google Sheets ID
 
-// Route to create a payment intent (Stripe)
+// Route to create payment intent with Stripe
 app.post('/api/create-payment-intent', async (req, res) => {
   try {
     const { amount, email } = req.body;
@@ -43,7 +43,7 @@ app.post('/api/create-payment-intent', async (req, res) => {
       amount: Math.round(amount * 100), // Convert to cents
       currency: 'usd',
       receipt_email: email,
-      payment_method_types: ['card']
+      payment_method_types: ['card'],
     });
 
     // Respond with the client secret
@@ -59,18 +59,13 @@ app.post('/api/store-purchase', async (req, res) => {
   const { orderId, email, items, total, date } = req.body;
 
   try {
-    // Validate input data
-    if (!orderId || !email || !items || !total || !date) {
-      return res.status(400).json({ error: 'Missing required fields' });
-    }
-
     // Append data to Google Sheet
     const response = await sheets.spreadsheets.values.append({
       spreadsheetId: SPREADSHEET_ID,
       range: 'Sheet1!A:E', // Replace "Sheet1" with your sheet name and range
       valueInputOption: 'RAW',
       resource: {
-        values: [[orderId, email, JSON.stringify(items), total, date]], // Save items as a JSON string
+        values: [[orderId, email, JSON.stringify(items), total, date]],
       },
     });
 
