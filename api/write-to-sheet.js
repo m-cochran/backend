@@ -1,34 +1,39 @@
-const { google } = require('googleapis');
+const { google } = require("googleapis");
 
-export default async function handler(req, res) {
-  if (req.method !== 'POST') {
-    return res.status(405).json({ error: 'Method not allowed' });
+module.exports = async (req, res) => {
+  if (req.method === "POST") {
+    const { orderId, cartItems, customerDetails } = req.body;
+
+    try {
+      const auth = new google.auth.GoogleAuth({
+        credentials: JSON.parse(process.env.GOOGLE_SERVICE_ACCOUNT),
+        scopes: ["https://www.googleapis.com/auth/spreadsheets"],
+      });
+
+      const sheets = google.sheets({ version: "v4", auth });
+
+      const spreadsheetId = process.env.SHEET_ID; // Your Google Sheet ID
+      const range = "Orders!A1"; // Sheet and range to append data
+      const values = [[
+        orderId,
+        customerDetails.name,
+        customerDetails.email,
+        JSON.stringify(cartItems),
+        new Date().toISOString(),
+      ]];
+
+      await sheets.spreadsheets.values.append({
+        spreadsheetId,
+        range,
+        valueInputOption: "USER_ENTERED",
+        resource: { values },
+      });
+
+      res.status(200).json({ success: true });
+    } catch (error) {
+      res.status(500).json({ error: error.message });
+    }
+  } else {
+    res.status(405).json({ error: "Method not allowed" });
   }
-
-  const { name, email, message } = req.body; // Adjust based on your form data structure
-
-  const credentials = JSON.parse(process.env.GOOGLE_SERVICE_ACCOUNT_KEY); // Use environment variable
-  const spreadsheetId = process.env.GOOGLE_SHEET_ID; // Use environment variable
-
-  try {
-    const auth = new google.auth.GoogleAuth({
-      credentials,
-      scopes: ['https://www.googleapis.com/auth/spreadsheets'],
-    });
-
-    const sheets = google.sheets({ version: 'v4', auth });
-    const response = await sheets.spreadsheets.values.append({
-      spreadsheetId,
-      range: 'Sheet1!A1', // Adjust range based on your sheet
-      valueInputOption: 'USER_ENTERED',
-      requestBody: {
-        values: [[name, email, message, new Date().toISOString()]],
-      },
-    });
-
-    res.status(200).json({ success: true, response });
-  } catch (error) {
-    console.error('Error writing to Google Sheets:', error);
-    res.status(500).json({ error: 'Failed to write to Google Sheets' });
-  }
-}
+};
