@@ -1,24 +1,44 @@
-const express = require("express");
-const app = express();
+app.post('/api/store-purchase', async (req, res) => {
+  try {
+    const { orderId, email, cartItems, totalAmount, date } = req.body;
 
-app.use(express.json());
+    // Validate input data
+    if (!orderId || !email || !cartItems || !totalAmount || !date) {
+      return res.status(400).json({ error: 'Missing required fields' });
+    }
 
-app.post("/api/store-purchase", (req, res) => {
-    const { orderId, email, items, total, date } = req.body;
+    // Prepare data to be inserted into Google Sheets
+    const rows = cartItems.map(item => [
+      orderId,
+      email,
+      item.name,
+      item.quantity,
+      item.price,
+      totalAmount,
+      date,
+    ]);
 
-    // Store data in your database (e.g., MongoDB, Firebase, MySQL)
-    database.collection("purchases").insertOne({
-        orderId,
-        email,
-        items,
-        total,
-        date
-    }).then(result => {
-        res.status(200).json({ message: "Purchase stored successfully" });
-    }).catch(err => {
-        console.error(err);
-        res.status(500).json({ message: "Error storing purchase" });
+    // Add data to the Google Sheet
+    await sheets.spreadsheets.values.append({
+      spreadsheetId: SPREADSHEET_ID,
+      range: 'Sheet1!A1', // Change this if your sheet has different range
+      valueInputOption: 'RAW',
+      requestBody: {
+        values: rows,
+      },
     });
+
+    // Respond with a success message
+    res.status(200).json({ message: 'Purchase stored successfully!' });
+
+  } catch (error) {
+    console.error('Error storing purchase:', error);
+    res.status(500).json({ error: 'Failed to store purchase. Please try again.' });
+  }
 });
 
-app.listen(3000, () => console.log("Server running on port 3000"));
+
+const PORT = process.env.PORT || 3000;
+app.listen(PORT, () => {
+  console.log(`Server running on port ${PORT}`);
+});
