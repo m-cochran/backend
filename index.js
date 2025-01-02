@@ -1,12 +1,32 @@
+// Import dependencies
 const express = require('express');
 const cors = require('cors');
 const stripe = require('stripe')(process.env.STRIPE_SECRET_KEY);
+const { google } = require('googleapis');
+const bodyParser = require('body-parser');
+const fs = require('fs');
 require('dotenv').config();
 
+// Initialize the app and middleware
 const app = express();
+const PORT = process.env.PORT || 3000;
 app.use(cors());
-app.use(express.json());
+app.use(bodyParser.json()); // For parsing JSON bodies
 
+// Google Sheets API setup
+const credentials = JSON.parse(fs.readFileSync('credentials.json', 'utf8'));
+const { client_email, private_key } = credentials;
+const auth = new google.auth.JWT(
+  client_email,
+  null,
+  private_key,
+  ['https://www.googleapis.com/auth/spreadsheets']
+);
+
+const sheets = google.sheets({ version: 'v4', auth });
+const SPREADSHEET_ID = '1wPeCV9lwDu-gJarBLTHAOipb4y83RwT_Een88zHGcpc'; // Your Google Sheets ID
+
+// Route for Stripe payment intent creation
 app.post('/api/create-payment-intent', async (req, res) => {
   try {
     const { amount, email } = req.body;
@@ -32,7 +52,29 @@ app.post('/api/create-payment-intent', async (req, res) => {
   }
 });
 
-const PORT = process.env.PORT || 3000;
+// Route to store purchase details in Google Sheets
+app.post('/api/store-purchase', async (req, res) => {
+  const { orderId, email, items, total, date } = req.body;
+
+  try {
+    // Append data to Google Sheet
+    const response = await sheets.spreadsheets.values.append({
+      spreadsheetId: SPREADSHEET_ID,
+      range: 'Sheet1!A:E', // Replace with your actual range
+      valueInputOption: 'RAW',
+      resource: {
+        values: [[orderId, email, JSON.stringify(items), total, date]],
+      },
+    });
+
+    res.status(200).json({ message: 'Purchase stored successfully' });
+  } catch (err) {
+    console.error('Error storing purchase:', err);
+    res.status(500).json({ message: 'Error storing purchase' });
+  }
+});
+
+// Start the server
 app.listen(PORT, () => {
   console.log(`Server running on port ${PORT}`);
 });
