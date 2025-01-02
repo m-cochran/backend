@@ -1,1 +1,39 @@
-[]
+[
+  {
+    "id": "pi_1F9m1q2eZvKYlo2C29VsX0mA", // Payment Intent ID from Stripe
+    "userId": "customer@example.com",  // User's email (from metadata)
+    "amount": 5000,  // Amount in cents (from Stripe paymentIntent.amount)
+    "paymentStatus": "succeeded",  // Status of the payment (from Stripe paymentIntent.status)
+    "cartItems": [
+      {
+        "id": "item1",
+        "name": "Product 1",
+        "quantity": 2,
+        "price": 2500
+      },
+      {
+        "id": "item2",
+        "name": "Product 2",
+        "quantity": 1,
+        "price": 1000
+      }
+    ],  // Cart items (from metadata)
+    "shippingAddress": {
+      "line1": "123 Main St",
+      "line2": "Apt 4B",
+      "city": "New York",
+      "state": "NY",
+      "postal_code": "10001",
+      "country": "US"
+    },  // Shipping address (from metadata)
+    "billingAddress": {
+      "line1": "123 Main St",
+      "line2": "Apt 4B",
+      "city": "New York",
+      "state": "NY",
+      "postal_code": "10001",
+      "country": "US"
+    },  // Billing address (from metadata)
+    "createdAt": "2025-01-01T12:00:00Z"  // Date and time when the order was created
+  }
+]
