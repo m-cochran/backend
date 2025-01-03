@@ -1,5 +1,17 @@
 const { google } = require("googleapis");
 
+
+export default async function handler(req, res) {
+  // Handle CORS
+  res.setHeader('Access-Control-Allow-Origin', '*');  // For allowing all domains
+  res.setHeader('Access-Control-Allow-Methods', 'GET,POST,OPTIONS');  // Allow relevant methods
+  res.setHeader('Access-Control-Allow-Headers', 'Content-Type, Authorization');  // Allow specific headers
+
+  if (req.method === 'OPTIONS') {
+    // Handle preflight request
+    return res.status(200).end();
+  }
+
 module.exports = async (req, res) => {
   if (req.method === "POST") {
     const { orderId, cartItems, customerDetails } = req.body;
