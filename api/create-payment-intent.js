@@ -31,24 +31,9 @@ app.post('/api/create-payment-intent', async (req, res) => {
       }
     });
 
-
-    // Create an order record in your database
-    const order = new Order({
-      userId: req.user.id, // The current logged-in user
-      paymentIntentId: paymentIntent.id,
-      paymentMethod: paymentIntent.payment_method,
-      amount: paymentIntent.amount_received,
-      paymentStatus: paymentIntent.status,
-      shippingAddress: req.body.shippingAddress, // Collect shipping address from frontend
-      // Add more details here
-    });
-
-    await order.save();
-
-    // Respond with order information
-    res.json({ success: true, orderId: order.id });
-  } catch (err) {
-    res.status(500).json({ error: err.message });
+    res.send({ clientSecret: paymentIntent.client_secret });
+  } catch (error) {
+    res.status(500).send({ error: error.message });
   }
 });
 
