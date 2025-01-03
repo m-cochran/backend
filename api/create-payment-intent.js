@@ -1,4 +1,4 @@
-const stripe = require("stripe")(process.env.STRIPE_SECRET_KEY);
+const stripe = require('stripe')(process.env.STRIPE_SECRET_KEY);
 
 export default async function handler(req, res) {
   // Handle CORS
@@ -11,16 +11,15 @@ export default async function handler(req, res) {
     return res.status(200).end();
   }
 
-
-module.exports = async (req, res) => {
-  if (req.method === "POST") {
+  if (req.method === 'POST') {
     const { amount, email, name, phone, address } = req.body;
 
     try {
+      // Create a payment intent
       const paymentIntent = await stripe.paymentIntents.create({
         amount,
-        currency: "usd",
-        payment_method_types: ["card"],
+        currency: 'usd',
+        payment_method_types: ['card'],
         receipt_email: email,
         shipping: {
           name,
@@ -29,11 +28,14 @@ module.exports = async (req, res) => {
         },
       });
 
+      // Return client secret for the frontend to complete the payment
       res.status(200).json({ clientSecret: paymentIntent.client_secret });
     } catch (error) {
+      // Handle error and respond accordingly
       res.status(500).json({ error: error.message });
     }
   } else {
-    res.status(405).json({ error: "Method not allowed" });
+    // Handle unsupported methods
+    res.status(405).json({ error: 'Method not allowed' });
   }
-};
+}
