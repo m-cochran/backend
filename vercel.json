@@ -2,27 +2,14 @@
   "version": 2,
   "builds": [
     {
-      "src": "api/create-payment-intent.js",
-      "use": "@vercel/node"
-    },
-    {
-      "src": "api/update-google-sheet.js",
+      "src": "index.js",
       "use": "@vercel/node"
     }
   ],
-  "env": {
-    "GOOGLE_SERVICE_ACCOUNT": "@google-service-account",
-    "SHEET_ID": "@sheet-id",
-    "STRIPE_SECRET_KEY": "@stripe-secret-key"
-  },
   "routes": [
     {
       "src": "/api/create-payment-intent",
-      "dest": "/api/create-payment-intent.js"
-    },
-    {
-      "src": "/api/update-google-sheet",
-      "dest": "/api/update-google-sheet.js"
+      "dest": "/index.js"
     }
   ]
 }
