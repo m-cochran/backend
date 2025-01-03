@@ -25,7 +25,7 @@ export default async function handler(req, res) {
       const sheets = google.sheets({ version: "v4", auth });
 
       const spreadsheetId = process.env.SHEET_ID; // Your Google Sheet ID
-      const range = "PurchaseData!A1"; // Sheet and range to append data
+      const range = "Sheet1!A1"; // Sheet and range to append data
 
       // Data to append
       const values = [
