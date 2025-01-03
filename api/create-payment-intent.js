@@ -1,41 +1,55 @@
+const express = require('express');
+const bodyParser = require('body-parser');
 const stripe = require('stripe')(process.env.STRIPE_SECRET_KEY);
+const app = express();
 
-export default async function handler(req, res) {
-  // Handle CORS
-  res.setHeader('Access-Control-Allow-Origin', '*');  // For allowing all domains
-  res.setHeader('Access-Control-Allow-Methods', 'GET,POST,OPTIONS');  // Allow relevant methods
-  res.setHeader('Access-Control-Allow-Headers', 'Content-Type, Authorization');  // Allow specific headers
+app.use(bodyParser.json());
 
-  if (req.method === 'OPTIONS') {
-    // Handle preflight request
-    return res.status(200).end();
+app.post('/api/create-payment-intent', async (req, res) => {
+  const {
+    amount,
+    email,
+    phone,
+    name,
+    address,
+    shippingAddress,
+    cartItems // Receive cartItems from the request
+  } = req.body;
+
+  try {
+    // Create a payment intent with metadata
+    const paymentIntent = await stripe.paymentIntents.create({
+      amount: amount,
+      currency: 'usd',
+      metadata: {
+        email: email,
+        phone: phone,
+        name: name,
+        address: JSON.stringify(address),
+        shippingAddress: JSON.stringify(shippingAddress),
+        cartItems: JSON.stringify(cartItems) // Add cartItems to metadata
+      }
+    });
+
+
+    // Create an order record in your database
+    const order = new Order({
+      userId: req.user.id, // The current logged-in user
+      paymentIntentId: paymentIntent.id,
+      paymentMethod: paymentIntent.payment_method,
+      amount: paymentIntent.amount_received,
+      paymentStatus: paymentIntent.status,
+      shippingAddress: req.body.shippingAddress, // Collect shipping address from frontend
+      // Add more details here
+    });
+
+    await order.save();
+
+    // Respond with order information
+    res.json({ success: true, orderId: order.id });
+  } catch (err) {
+    res.status(500).json({ error: err.message });
   }
+});
 
-  if (req.method === 'POST') {
-    const { amount, email, name, phone, address } = req.body;
-
-    try {
-      // Create a payment intent
-      const paymentIntent = await stripe.paymentIntents.create({
-        amount,
-        currency: 'usd',
-        payment_method_types: ['card'],
-        receipt_email: email,
-        shipping: {
-          name,
-          phone,
-          address,
-        },
-      });
-
-      // Return client secret for the frontend to complete the payment
-      res.status(200).json({ clientSecret: paymentIntent.client_secret });
-    } catch (error) {
-      // Handle error and respond accordingly
-      res.status(500).json({ error: error.message });
-    }
-  } else {
-    // Handle unsupported methods
-    res.status(405).json({ error: 'Method not allowed' });
-  }
-}
+app.listen(3000, () => console.log('Server running on port 3000'));
