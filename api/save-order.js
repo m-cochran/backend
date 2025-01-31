@@ -4,11 +4,9 @@ const app = express();
 const bodyParser = require('body-parser');
 
 // Enable CORS for all requests
-app.use((req, res, next) => {
-  res.header('Access-Control-Allow-Origin', '*');
-  res.header('Access-Control-Allow-Headers', 'Origin, X-Requested-With, Content-Type, Accept');
-  next();
-});
+app.use(cors({
+  origin: 'https://m-cochran.github.io', // Allow requests from this origin
+}));
 
 // Parse the request body
 app.use(bodyParser.urlencoded({ extended: true }));
