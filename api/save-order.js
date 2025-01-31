@@ -1,9 +1,12 @@
 const express = require('express');
-const axios = require('axios'); // Import Axios for fetching the GitHub URL
-const cors = require('cors'); // Import CORS middleware
+const axios = require('axios');
+const cors = require('cors');
 const bodyParser = require('body-parser');
 
 const app = express();
+
+// Use environment variable for the GitHub PAT
+const githubPat = process.env.GITHUB_PAT;
 
 // Enable CORS for all requests
 app.use(cors({
@@ -32,10 +35,10 @@ app.post('/api/save-order', async (req, res) => {
       message: 'Updated orders.json',
       content: Buffer.from(JSON.stringify(orders, null, 2)).toString('base64'),
       branch: 'main',
-      sha: response.data.sha  // Attach sha for the file being updated
+      sha: response.data.sha // Attach the sha for the file being updated
     }, {
       headers: { 
-        'Authorization': `token YOUR_PERSONAL_ACCESS_TOKEN` // Include your GitHub token
+        'Authorization': `token ${githubPat}` // Use the PAT from the environment variable
       }
     });
 
