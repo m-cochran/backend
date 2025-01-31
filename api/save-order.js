@@ -1,59 +1,58 @@
-const { google } = require("googleapis");
+const express = require('express');
+const axios = require('axios'); // Import axios for fetching the GitHub URL
+const app = express();
+const bodyParser = require('body-parser');
 
-export default async function handler(req, res) {
-  // Handle CORS
-  res.setHeader('Access-Control-Allow-Origin', '*');  // For allowing all domains
-  res.setHeader('Access-Control-Allow-Methods', 'GET,POST,OPTIONS');  // Allow relevant methods
-  res.setHeader('Access-Control-Allow-Headers', 'Content-Type, Authorization');  // Allow specific headers
+// Enable CORS for all requests
+app.use((req, res, next) => {
+  res.header('Access-Control-Allow-Origin', '*');
+  res.header('Access-Control-Allow-Headers', 'Origin, X-Requested-With, Content-Type, Accept');
+  next();
+});
 
-  if (req.method === 'OPTIONS') {
-    // Handle preflight request
-    return res.status(200).end();
-  }
+// Parse the request body
+app.use(bodyParser.urlencoded({ extended: true }));
+app.use(bodyParser.json());
 
-  if (req.method === "POST") {
-    const { orderId, cartItems, customerDetails } = req.body;
+// Define the route for saving an order
+app.post('/api/save-order', (req, res) => {
+  try {
+    const orderData = req.body;
 
-    try {
-      // Authenticate with Google Sheets API using the service account credentials
-      const auth = new google.auth.GoogleAuth({
-        credentials: JSON.parse(process.env.GOOGLE_SERVICE_ACCOUNT),
-        scopes: ["https://www.googleapis.com/auth/spreadsheets"],
+    // Fetch the existing orders from the GitHub URL
+    axios.get('https://raw.githubusercontent.com/m-cochran/Randomerr/main/orders.json')
+      .then(response => {
+        const orders = JSON.parse(response.data);
+
+        // Add the new order to the orders array
+        orders.push(orderData);
+
+        // Update the GitHub URL with the new orders
+        axios.put('https://api.github.com/repos/m-cochran/Randomerr/contents/orders.json', {
+          message: 'Updated orders.json',
+          content: Buffer.from(JSON.stringify(orders, null, 2)).toString('base64'),
+          branch: 'main'
+        })
+        .then(() => {
+          res.status(201).send({ message: 'Order saved successfully' });
+        })
+        .catch(error => {
+          console.error('Error updating orders.json:', error);
+          res.status(500).send({ message: 'Error saving order' });
+        });
+      })
+      .catch(error => {
+        console.error('Error fetching orders.json:', error);
+        res.status(500).send({ message: 'Error fetching orders.json' });
       });
-
-      // Initialize the Google Sheets API client
-      const sheets = google.sheets({ version: "v4", auth });
-
-      const spreadsheetId = process.env.SHEET_ID; // Your Google Sheet ID
-      const range = "Sheet1!A1"; // Sheet and range to append data
-
-      // Data to append
-      const values = [
-        [
-          orderId,
-          customerDetails.name,
-          customerDetails.email,
-          JSON.stringify(cartItems),
-          new Date().toISOString(),
-        ],
-      ];
-
-      // Append the data to the Google Sheet
-      await sheets.spreadsheets.values.append({
-        spreadsheetId,
-        range,
-        valueInputOption: "USER_ENTERED",
-        resource: { values },
-      });
-
-      // Return a success response
-      res.status(200).json({ success: true });
-    } catch (error) {
-      // Return an error response if something goes wrong
-      res.status(500).json({ error: error.message });
-    }
-  } else {
-    // If the request method is not POST, return a 405 error
-    res.status(405).json({ error: "Method not allowed" });
+  } catch (error) {
+    console.error('Error saving order:', error);
+    res.status(500).send({ message: 'Error saving order' });
   }
-}
+});
+
+// Start the server
+const port = 3000;
+app.listen(port, () => {
+  console.log(`Server listening on port ${port}`);
+});
