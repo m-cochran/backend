@@ -1,66 +1,66 @@
+// server.js
+
 const express = require('express');
-const fetch = require('node-fetch');
-require('dotenv').config();
+const bodyParser = require('body-parser');
+const axios = require('axios');
+const fs = require('fs');
 
 const app = express();
-const port = 3000;
+const PORT = process.env.PORT || 3000;
 
-app.use(express.json());
+app.use(bodyParser.json());
+app.use(bodyParser.text({ type: 'text/csv' }));
 
-// GitHub API URL and token
-const GITHUB_API_URL = 'https://api.github.com/repos/m-cochran/Randomerr/contents/orders.json';
-const GITHUB_TOKEN = process.env.GITHUB_PAT; // Read PAT from environment variable
+app.post('/upload-csv', async (req, res) => {
+    const csvContent = req.body;
 
-// Endpoint to handle the order submission
-app.post('/submit-order', async (req, res) => {
-  const orderData = req.body;
+    const token = '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'; // Replace with your GitHub token
+    const repoOwner = 'm-cochran';
+    const repoName = 'Randomerr';
+    const filePath = `orders/order_${Date.now()}.csv`; // Path to save the CSV
 
-  try {
-    // Fetch the current content of orders.json from GitHub
-    let currentOrders = [];
-    const response = await fetch(GITHUB_API_URL, {
-      method: 'GET',
-      headers: {
-        'Authorization': `Bearer ${GITHUB_TOKEN}`,
-      },
-    });
-    
-    if (response.ok) {
-      const data = await response.json();
-      currentOrders = JSON.parse(Buffer.from(data.content, 'base64').toString('utf8')); // Decoding base64 content
+    const url = `https://api.github.com/repos/${repoOwner}/${repoName}/contents/${filePath}`;
+
+    try {
+        // Get current file content (Check if file already exists)
+        const getResponse = await axios.get(url, {
+            headers: {
+                Authorization: `token ${token}`
+            }
+        });
+
+        // If file exists, update it
+        const sha = getResponse.data.sha; // Get current SHA for the commit
+        await axios.put(url, {
+            message: 'Updating CSV file',
+            content: Buffer.from(csvContent).toString('base64'),
+            sha
+        }, {
+            headers: {
+                Authorization: `token ${token}`
+            }
+        });
+
+    } catch (error) {
+        // If file doesn't exist, create it
+        if (error.response && error.response.status === 404) {
+            await axios.put(url, {
+                message: 'Creating CSV file',
+                content: Buffer.from(csvContent).toString('base64')
+            }, {
+                headers: {
+                    Authorization: `token ${token}`
+                }
+            });
+        } else {
+            console.error(error);
+            return res.status(500).send('Error uploading CSV to GitHub');
+        }
     }
 
-    // Add the new order
-    currentOrders.push(orderData);
-
-    // Convert the updated orders to base64
-    const updatedOrdersContent = Buffer.from(JSON.stringify(currentOrders)).toString('base64');
-
-    // Commit the updated file back to GitHub
-    const commitMessage = `Add order ${orderData.orderId}`;
-    const commitResponse = await fetch(GITHUB_API_URL, {
-      method: 'PUT',
-      headers: {
-        'Authorization': `Bearer ${GITHUB_TOKEN}`,
-        'Content-Type': 'application/json',
-      },
-      body: JSON.stringify({
-        message: commitMessage,
-        content: updatedOrdersContent,
-      }),
-    });
-
-    if (commitResponse.ok) {
-      res.status(200).send({ message: 'Order successfully saved to GitHub' });
-    } else {
-      res.status(500).send({ message: 'Failed to save order to GitHub' });
-    }
-  } catch (error) {
-    console.error(error);
-    res.status(500).send({ message: 'Error processing order' });
-  }
+    res.send('CSV uploaded successfully!');
 });
 
-app.listen(port, () => {
-  console.log(`Server is running on http://localhost:${port}`);
+app.listen(PORT, () => {
+    console.log(`Server is running on port ${PORT}`);
 });
