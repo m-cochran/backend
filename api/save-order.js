@@ -1,51 +1,73 @@
 const express = require('express');
 const axios = require('axios');
 const router = express.Router();
+const fs = require('fs');
 require('dotenv').config();
 
-// Convert order data to CSV format
-function convertToCSV(orderData) {
-    const headers = Object.keys(orderData).join(',');
-    const values = Object.values(orderData).map(value => `"${value}"`).join(',');
-    return `${headers}\n${values}`;
-}
+const GITHUB_TOKEN = process.env.GITHUB_TOKEN;
+const REPO_OWNER = 'm-cochran';
+const REPO_NAME = 'Randomerr';
+const FILE_PATH = 'orders';
 
-// Function to upload CSV to GitHub
-async function uploadToGitHub(csvContent) {
-    const token = process.env.GITHUB_TOKEN;
-    const repoOwner = 'm-cochran';
-    const repoName = 'Randomerr';
-    const filePath = `orders/order_${Date.now()}.csv`; 
-    const url = `https://api.github.com/repos/${repoOwner}/${repoName}/contents/${filePath}`;
+// Function to create or update a file in GitHub
+async function uploadToGitHub(fileName, content) {
+    const url = `https://api.github.com/repos/${REPO_OWNER}/${REPO_NAME}/contents/${FILE_PATH}/${fileName}`;
 
     try {
-        await axios.put(url, {
-            message: 'New order uploaded',
-            content: Buffer.from(csvContent).toString('base64')
-        }, {
-            headers: { Authorization: `token ${token}` }
+        // Check if the file already exists
+        const response = await axios.get(url, {
+            headers: { Authorization: `token ${GITHUB_TOKEN}` }
         });
 
-        return { success: true, message: 'Order uploaded successfully!' };
+        // If file exists, update it
+        const sha = response.data.sha;
+        await axios.put(url, {
+            message: 'Updating order file',
+            content: Buffer.from(content).toString('base64'),
+            sha
+        }, {
+            headers: { Authorization: `token ${GITHUB_TOKEN}` }
+        });
+
     } catch (error) {
-        console.error('GitHub Upload Error:', error.response ? error.response.data : error.message);
-        throw new Error('Failed to upload order to GitHub');
+        if (error.response && error.response.status === 404) {
+            // If file doesn't exist, create a new one
+            await axios.put(url, {
+                message: 'Creating new order file',
+                content: Buffer.from(content).toString('base64')
+            }, {
+                headers: { Authorization: `token ${GITHUB_TOKEN}` }
+            });
+        } else {
+            console.error('Error uploading to GitHub:', error.response ? error.response.data : error.message);
+            throw new Error('Error uploading order file to GitHub');
+        }
     }
 }
 
-// Route to handle order submission
-router.post('/save-order', async (req, res) => {
+// Endpoint to handle order submissions
+router.post('/', async (req, res) => {
     try {
         const orderData = req.body;
+        
         if (!orderData || Object.keys(orderData).length === 0) {
             return res.status(400).json({ error: 'Invalid order data' });
         }
 
-        const csvContent = convertToCSV(orderData);
-        const result = await uploadToGitHub(csvContent);
-        res.status(200).json(result);
+        // Convert order data to CSV format
+        const csvContent = Object.keys(orderData).map(key => `${key},${orderData[key]}`).join('\n');
+
+        // Generate a unique filename
+        const fileName = `order_${Date.now()}.csv`;
+
+        // Upload the CSV file to GitHub
+        await uploadToGitHub(fileName, csvContent);
+
+        res.status(200).json({ message: 'Order saved successfully!', fileName });
+
     } catch (error) {
-        res.status(500).json({ error: error.message });
+        console.error('Failed to save order:', error);
+        res.status(500).json({ error: 'Failed to save order' });
     }
 });
 
